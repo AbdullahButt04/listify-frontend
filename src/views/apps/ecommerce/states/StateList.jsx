@@ -1,0 +1,360 @@
+'use client'
+
+// React Imports
+import { useState, useEffect, useMemo } from 'react'
+
+// Next Imports
+import Link from 'next/link'
+import { useParams, usePathname, useSearchParams } from 'next/navigation'
+
+// MUI Imports
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Checkbox from '@mui/material/Checkbox'
+import IconButton from '@mui/material/IconButton'
+import MenuItem from '@mui/material/MenuItem'
+import Tooltip from '@mui/material/Tooltip'
+import TablePagination from '@mui/material/TablePagination'
+
+// Third-party Imports
+import classnames from 'classnames'
+import { rankItem } from '@tanstack/match-sorter-utils'
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFacetedMinMaxValues,
+  getPaginationRowModel,
+  getSortedRowModel
+} from '@tanstack/react-table'
+
+// Component Imports
+import OptionMenu from '@core/components/option-menu'
+import CustomAvatar from '@core/components/mui/Avatar'
+import TablePaginationComponent from '@components/TablePaginationComponent'
+import CustomTextField from '@core/components/mui/TextField'
+
+// Util Imports
+import { getLocalizedUrl } from '@/utils/i18n'
+
+// Style Imports
+import tableStyles from '@core/styles/table.module.css'
+import { Box, CircularProgress } from '@mui/material'
+import { useDispatch, useSelector } from 'react-redux'
+import { useRouter } from 'next/navigation'
+import {
+  getAllStates,
+  removeState,
+  setPage,
+  setPageSize,
+  setStatePage,
+  setstatePageSize
+} from '@/redux-store/slices/states'
+import { getFormattedDate } from '@/utils/commonfunctions'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import StateDialog from './StateDialog'
+import ViewStateDialog from './ViewStateDialog'
+import { NO_PERMISSION } from '@/utils/constants'
+import { toast } from 'react-toastify'
+
+// Column Definitions
+const columnHelper = createColumnHelper()
+
+// Function to parse URL params for page and size
+const readParams = sp => {
+  const page = Number(sp.get('page')) || 1
+  const size = Number(sp.get('size')) || 10
+  return { page, size }
+}
+
+const StateList = ({ invoiceData }) => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const dispatch = useDispatch()
+  const { states, initialLoading, page, pageSize, total } = useSelector(state => state.states)
+  const { profileData } = useSelector(state => state.adminSlice)
+
+
+
+  // States
+  const [hydratedFromUrl, setHydratedFromUrl] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [selectedState, setSelectedState] = useState('')
+  const [openDialog, setOpenDialog] = useState(false)
+  const [openViewDialogue, setOpenViewDialogue] = useState(false)
+
+  useEffect(() => {
+    if (hydratedFromUrl) return
+    const { page: p, size: s } = readParams(new URLSearchParams(searchParams?.toString() || ''))
+    dispatch(setPage(p))
+    dispatch(setPageSize(s))
+    setHydratedFromUrl(true)
+  }, [searchParams, hydratedFromUrl, dispatch])
+
+  useEffect(() => {
+    if (!hydratedFromUrl) return
+
+    const next = new URLSearchParams(searchParams?.toString() || '')
+
+    next.set('page', String(page))
+    next.set('size', String(pageSize))
+
+    const queryString = next.toString()
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false })
+  }, [page, pageSize, hydratedFromUrl, router, pathname, searchParams])
+
+  useEffect(() => {
+    if (!hydratedFromUrl) return
+    dispatch(getAllStates({ page, pageSize }))
+  }, [page, pageSize, hydratedFromUrl, dispatch])
+
+  const handleDelete = row => {
+
+    setSelectedState(row)
+    setConfirmOpen(true)
+  }
+
+  const confirmDeleteAction = () => {
+    if (selectedState && selectedState._id) {
+      dispatch(removeState(selectedState._id))
+    }
+    setConfirmOpen(false)
+    setSelectedState(null)
+  }
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('name', {
+        header: 'name',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row.original.name ? row.original.name : '-'}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('state_code', {
+        header: 'code',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row?.original?.state_code ? row?.original?.state_code : '-'}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('country_id', {
+        header: 'country',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row?.original?.country_id?.name ? row?.original?.country_id?.name : '-'}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('createdAt', {
+        header: 'created date',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {getFormattedDate(row?.original?.createdAt)}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('updatedAt', {
+        header: 'updated date',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {getFormattedDate(row?.original?.updatedAt)}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('action', {
+        header: 'Action',
+        cell: ({ row }) => (
+          <div className='flex items-center'>
+            <Tooltip title='View'>
+              <IconButton
+                onClick={() => {
+                  setSelectedState(row.original)
+                  setOpenViewDialogue(true)
+                }}
+                color='secondary'
+              >
+                <i className='tabler-eye' />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='Delete'>
+              <IconButton onClick={() => handleDelete(row.original)}>
+                <i className='tabler-trash text-textSecondary' />
+              </IconButton>
+            </Tooltip>
+          </div>
+        ),
+        enableSorting: false
+      })
+    ],
+    [states]
+  )
+
+  const table = useReactTable({
+    data: states,
+    columns,
+    manualPagination: true,
+    state: { pagination: { pageIndex: page - 1, pageSize: pageSize } },
+    pageCount: Math.max(1, Math.ceil((total || 0) / (pageSize || 1))),
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getFacetedMinMaxValues: getFacetedMinMaxValues()
+  })
+
+  return (
+    <>
+      <Box className='flex justify-between items-center mb-5'>
+        <Typography variant='h5'>States</Typography>
+        <Button
+          variant='contained'
+          startIcon={<i className='tabler-plus' />}
+          onClick={() => {
+            setOpenDialog(true)
+          }}
+        >
+          Add State
+        </Button>
+      </Box>
+      <Card>
+        <CardContent className='flex justify-between flex-wrap items-start gap-4'>
+          <div className='flex items-center justify-between gap-4'>
+            <div className='flex items-center gap-2'>
+              <CustomTextField
+                select
+                value={pageSize}
+                onChange={e => {
+                  const newSize = Number(e.target.value)
+                  dispatch(setPageSize(newSize))
+                  dispatch(setPage(1)) /* Page reset on user changing pageSize */
+                }}
+                className='max-sm:is-full sm:is-[70px]'
+              >
+                <MenuItem value='10'>10</MenuItem>
+                <MenuItem value='25'>25</MenuItem>
+                <MenuItem value='50'>50</MenuItem>
+              </CustomTextField>
+            </div>
+          </div>
+        </CardContent>
+        {initialLoading ? (
+          <div className='flex items-center justify-center gap-2 grow is-full my-10'>
+            <CircularProgress />
+            <Typography>Loading...</Typography>
+          </div>
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <>
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='tabler-chevron-up text-xl' />,
+                                desc: <i className='tabler-chevron-down text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          </>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getFilteredRowModel().rows.length === 0 && !initialLoading ? (
+                  Array.from({ length: pageSize }).map((_, index) => (
+                    <tr key={`empty-${index}`}>
+                      {index === Math.floor(pageSize / 2) ? (
+                        <td
+                          colSpan={table.getVisibleFlatColumns().length}
+                          className='text-center py-4 text-gray-500 font-medium whitespace-nowrap'
+                        >
+                          No data available
+                        </td>
+                      ) : (
+                        table.getVisibleFlatColumns().map(column => <td key={column.id}>&nbsp;</td>)
+                      )}
+                    </tr>
+                  ))
+                ) : (
+                  <>
+                    {table.getRowModel().rows.map(row => (
+                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                        ))}
+                      </tr>
+                    ))}
+                    {Array.from({ length: pageSize - table.getRowModel().rows.length }).map((_, index) => (
+                      <tr key={`empty-${index}`}>
+                        {table.getVisibleFlatColumns().map(column => (
+                          <td key={column.id}>&nbsp;</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        <TablePaginationComponent
+          table={table}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={page => dispatch(setPage(page))}
+          onPageSizeChange={size => {
+            dispatch(setPageSize(size))
+            dispatch(setPage(1))
+          }}
+        />
+      </Card>
+
+      <StateDialog open={openDialog} onClose={() => setOpenDialog(false)} countryData={invoiceData} />
+      <ViewStateDialog open={openViewDialogue} onClose={() => setOpenViewDialogue(false)} stateData={selectedState} />
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        setOpen={setConfirmOpen}
+        type='delete-state'
+        onConfirm={confirmDeleteAction}
+        onClose={() => setConfirmOpen(false)}
+      />
+    </>
+  )
+}
+
+export default StateList
