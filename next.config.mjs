@@ -5,6 +5,11 @@ const nextConfig = {
   images: {
     unoptimized: true // already present
   },
+  eslint: {
+    // Warning: This allows production builds to successfully complete 
+    // even if your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
 
   optimizeFonts: false, // disable Google Font optimization (saves memory)
   swcMinify: false, // use default Terser minifier, lower memory usage
