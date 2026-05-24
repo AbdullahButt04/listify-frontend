@@ -26,12 +26,11 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@tanstack/match-sorter-utils": "^8.19.4",
     "@tanstack/react-table": "^8.21.3",
-    "axios": "^1.11.0",
+    "axios": "^1.16.1",
     "classnames": "2.5.1",
     "date-fns": "^4.1.0",
     "firebase": "^12.1.0",
-    "next": "15.1.2",
-    "next-auth": "^4.24.11",
+    "next": "15.5.18",
     "react": "18.3.1",
     "react-apexcharts": "^1.7.0",
     "react-colorful": "5.6.1",
@@ -41,19 +40,19 @@
     "react-toastify": "10.0.6",
     "react-use": "17.6.0",
     "server-only": "0.0.1",
-    "valibot": "0.42.1",
+    "valibot": "^1.4.0",
     "yup": "^1.7.0"
   },
   "devDependencies": {
     "@iconify/json": "2.2.286",
-    "@iconify/tools": "4.1.1",
+    "@iconify/tools": "^5.0.12",
     "@iconify/utils": "2.2.1",
     "autoprefixer": "10.4.20",
     "eslint": "8.57.1",
     "eslint-config-next": "15.1.2",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.31.0",
-    "postcss": "8.4.49",
+    "postcss": "^8.5.15",
     "postcss-styled-syntax": "0.7.0",
     "prettier": "3.4.2",
     "stylelint": "16.12.0",
@@ -62,12 +61,19 @@
     "stylis-plugin-rtl": "2.1.1",
     "tailwindcss": "3.4.17",
     "tailwindcss-logical": "3.0.1",
-    "tsx": "4.19.2"
+    "tsx": "^4.22.3"
   },
   "resolutions": {
     "rimraf": "^5.0.7"
   },
   "overrides": {
-    "rimraf": "^5.0.7"
+    "rimraf": "^5.0.7",
+    "js-cookie": "3.0.7",
+    "follow-redirects": "1.16.0",
+    "protobufjs": "^7.6.1",
+    "@protobufjs/utf8": "1.1.1",
+    "uuid": "14.0.0",
+    "preact": "10.29.2",
+    "postcss": "$postcss"
   }
 }

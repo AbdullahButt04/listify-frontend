@@ -1,5 +1,3 @@
-// Context Imports
-import { NextAuthProvider } from '@/contexts/nextAuthProvider'
 import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
 import { SettingsProvider } from '@core/contexts/settingsContext'
 import ThemeProvider from '@components/theme'
@@ -21,7 +19,6 @@ const Providers = async props => {
   const systemMode = await getSystemMode()
 
   return (
-    // <NextAuthProvider basePath={process.env.NEXTAUTH_BASEPATH}>
     <VerticalNavProvider>
       <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
         <ThemeProvider direction={direction} systemMode={systemMode}>
@@ -30,7 +27,6 @@ const Providers = async props => {
         </ThemeProvider>
       </SettingsProvider>
     </VerticalNavProvider>
-    // </NextAuthProvider>
   )
 }
 

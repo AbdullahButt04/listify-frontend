@@ -206,7 +206,7 @@ const Register = ({ mode }) => {
 
     try {
       if (value.trim()) {
-        let obj = new Function('return ' + value)()
+        const obj = JSON.parse(value)
 
         setValue('privateKey', obj)
         setJsonError('')
